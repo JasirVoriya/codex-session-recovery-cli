@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Codex Session Recovery</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar panel">
+        <div>
+          <p class="eyebrow">Desktop recovery</p>
+          <h1>Codex Session Recovery</h1>
+          <p class="lede">
+            Recover left-sidebar history with the real rollout and
+            <code>state_5.sqlite</code> rules.
+          </p>
+        </div>
+        <form id="scan-form" class="scan-form">
+          <label>
+            <span>Codex home</span>
+            <input id="codex-home" type="text" placeholder="~/.codex" />
+          </label>
+          <label>
+            <span>Archived mode</span>
+            <select id="archived-mode">
+              <option value="active">Active only</option>
+              <option value="all">All</option>
+              <option value="archived">Archived only</option>
+            </select>
+          </label>
+          <label>
+            <span>Providers</span>
+            <input
+              id="provider-filter"
+              type="text"
+              placeholder="openai,aixj_vip"
+            />
+          </label>
+          <label>
+            <span>Sources</span>
+            <input
+              id="source-filter"
+              type="text"
+              placeholder="cli,vscode,atlas,chatgpt"
+            />
+          </label>
+          <button id="scan-button" type="submit">Scan</button>
+        </form>
+      </header>
+
+      <section class="summary-grid">
+        <article class="summary-card panel">
+          <span class="summary-label">Default provider</span>
+          <strong id="summary-provider">—</strong>
+        </article>
+        <article class="summary-card panel">
+          <span class="summary-label">Visible</span>
+          <strong id="summary-visible">0</strong>
+        </article>
+        <article class="summary-card panel">
+          <span class="summary-label">Hidden</span>
+          <strong id="summary-hidden">0</strong>
+        </article>
+        <article class="summary-card panel">
+          <span class="summary-label">State only</span>
+          <strong id="summary-state-only">0</strong>
+        </article>
+      </section>
+
+      <main class="main-grid">
+        <section class="panel column">
+          <div class="panel-header">
+            <div>
+              <h2>Sessions</h2>
+              <p id="session-subtitle">Browse visible and hidden sessions.</p>
+            </div>
+            <div class="toolbar">
+              <select id="session-filter">
+                <option value="all">All</option>
+                <option value="visible">Visible</option>
+                <option value="hidden">Hidden</option>
+              </select>
+              <input
+                id="session-search"
+                type="search"
+                placeholder="Search title, id, reason"
+              />
+            </div>
+          </div>
+          <div id="session-list" class="scroll-list session-list"></div>
+        </section>
+
+        <section class="panel column">
+          <div class="panel-header">
+            <div>
+              <h2>Details</h2>
+              <p id="detail-subtitle">Select a session to inspect recovery clues.</p>
+            </div>
+          </div>
+          <div id="session-detail" class="detail-card empty-state">
+            Select a session to inspect rollout and state details.
+          </div>
+          <div class="action-bar">
+            <button id="preview-migrate" disabled>Preview migrate</button>
+            <button id="apply-migrate" class="accent" disabled>Apply migrate</button>
+            <button id="preview-repair">Preview repair</button>
+            <button id="apply-repair" class="accent" disabled>Apply repair</button>
+          </div>
+          <div id="operation-preview" class="detail-card empty-state">
+            Operation previews appear here.
+          </div>
+        </section>
+
+        <section class="panel column">
+          <div class="panel-header">
+            <div>
+              <h2>Backups</h2>
+              <p>Review manifests and roll back from a known good snapshot.</p>
+            </div>
+            <div class="toolbar">
+              <button id="refresh-backups">Refresh</button>
+              <button id="preview-rollback" disabled>Preview rollback</button>
+              <button id="apply-rollback" class="danger" disabled>
+                Apply rollback
+              </button>
+            </div>
+          </div>
+          <div id="backup-list" class="scroll-list backup-list"></div>
+          <div id="backup-detail" class="detail-card empty-state">
+            Select a backup manifest to inspect rollback metadata.
+          </div>
+        </section>
+      </main>
+
+      <footer class="panel status-bar">
+        <div id="status-banner">Loading…</div>
+      </footer>
+    </div>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
