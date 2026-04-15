@@ -107,6 +107,69 @@ Roll back a previous write:
 codex-session-recovery rollback ~/.codex/migration-backups/<backup-dir> --apply --yes
 ```
 
+## Using this tool with AI
+
+The simplest prompt is often enough:
+
+```text
+用codex-session-recovery-cli工具，把会话都迁移到当前账号
+```
+
+English version:
+
+```text
+Use codex-session-recovery-cli to migrate all sessions to my current account.
+```
+
+This project works well with coding agents and chat assistants that can run
+shell commands on your machine. A good pattern is:
+
+1. let the AI run `scan` first
+2. ask it to explain the hidden reasons
+3. ask it to preview `migrate` or `repair-state`
+4. only then let it run an `--apply` command
+
+Recommended agent workflow:
+
+- start with read-only commands such as `scan --json`
+- ask the AI to summarize what it found before changing anything
+- require explicit confirmation before `--apply`
+- keep the generated backup manifest so the AI can roll back if needed
+
+Example prompt for Codex or another terminal-capable agent:
+
+```text
+Use codex-session-recovery-cli to inspect my Codex history.
+First run a scan and explain why sessions are hidden.
+Do not apply any writes yet.
+If provider mismatch is the main issue, preview the migrate command I should run.
+```
+
+Example prompt when you want the AI to repair state drift safely:
+
+```text
+Use codex-session-recovery-cli to check whether rollout files and state_5.sqlite
+are out of sync. Preview any repair-state changes first, summarize the risks,
+and only apply them after showing me the exact command.
+```
+
+Example prompt when you already know the migration you want:
+
+```text
+Use codex-session-recovery-cli to migrate all sessions from provider openai to
+aixj_vip. Show me the preview first. If the plan looks safe, apply it and then
+tell me where the backup manifest was written.
+```
+
+If your AI assistant cannot execute shell commands directly, ask it to generate
+the exact command sequence for you and then run the commands yourself.
+
+When sharing output with an AI system, prefer:
+
+- `scan` summaries over full raw JSON when possible
+- redacting sensitive `firstUserMessage`, `cwd`, or local path data
+- sharing backup manifest paths instead of full manifest contents
+
 ## Command reference
 
 ### `scan`
