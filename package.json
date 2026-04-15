@@ -1,16 +1,38 @@
 {
   "name": "codex-session-recovery-cli",
-  "private": true,
   "version": "0.1.0",
+  "description": "Analyze, migrate, repair, and roll back Codex sidebar session metadata from rollout files and state_5.sqlite.",
+  "license": "MIT",
   "type": "module",
   "bin": {
     "codex-session-recovery": "./bin/codex-session-recovery.js"
   },
+  "files": [
+    "bin/**/*",
+    "electron/**/*",
+    "renderer/**/*",
+    "src/**/*",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "codex",
+    "session",
+    "recovery",
+    "cli",
+    "sqlite",
+    "electron"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
+    "check": "npm run test && npm run smoke",
     "scan": "node ./src/cli.js scan",
     "migrate": "node ./src/cli.js migrate",
     "repair-state": "node ./src/cli.js repair-state",
     "rollback": "node ./src/cli.js rollback",
+    "smoke": "node ./src/cli.js --help && node ./src/cli.js scan --help && node ./src/cli.js migrate --help && node ./src/cli.js repair-state --help && node ./src/cli.js rollback --help && node ./src/cli.js ui --help",
     "ui": "node ./src/cli.js ui",
     "gui": "electron ./electron/main.mjs",
     "gui:dev": "electron ./electron/main.mjs",
@@ -38,7 +60,8 @@
       "src/**/*",
       "bin/**/*",
       "package.json",
-      "README.md"
+      "README.md",
+      "LICENSE"
     ],
     "directories": {
       "buildResources": "build"

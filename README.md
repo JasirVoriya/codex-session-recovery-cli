@@ -1,34 +1,117 @@
-# Codex session recovery CLI
+# Codex Session Recovery CLI
 
-This tool analyzes Codex local history using the same data path as the left
-sidebar: rollout files, `state_5.sqlite`, provider filtering, interactive
-source filtering, and archived state. It helps you explain why a thread is not
-visible, migrate provider metadata, repair SQLite state drift, roll back any
-write operation from a generated backup manifest, and inspect the same workflow
-through a desktop GUI.
+`codex-session-recovery-cli` explains why Codex threads are hidden, previews
+safe fixes, rewrites provider metadata when needed, repairs SQLite state drift,
+and rolls every write back from a generated backup manifest.
 
-## What it does
+It uses the same local data sources as the Codex sidebar:
 
-- Scans `sessions`, `archived_sessions`, and `state_5.sqlite` together.
-- Applies the real sidebar defaults: current provider and interactive sources.
-- Explains hidden threads with reason codes such as `provider_mismatch`.
-- Migrates provider metadata in both rollout files and the state DB.
-- Repairs stale SQLite rows from rollout metadata.
-- Creates a backup manifest before every write.
-- Exposes a friendly `ui` subcommand for interactive terminal browsing.
-- Exposes an Electron desktop GUI for macOS and Windows workflows.
+- rollout files in `sessions/` and `archived_sessions/`
+- `state_5.sqlite`
+- provider filtering
+- interactive source filtering
+- archived state rules
+
+## Why this exists
+
+Codex history can look "missing" for a few different reasons:
+
+- the current provider filter does not match the session provider
+- the session source is filtered out
+- rollout files and SQLite state drift apart
+- archived state is not what the sidebar expects
+
+This project gives you a single recovery workflow for diagnosis, migration,
+repair, rollback, terminal UI, and desktop GUI.
+
+## Features
+
+- Sidebar-faithful analysis of rollout files and `state_5.sqlite`
+- Hidden-session explanations such as `provider_mismatch`
+- Provider migration previews and apply flows
+- State DB repair from rollout metadata
+- Automatic backups before every write
+- Rollback from backup manifest or backup directory
+- Terminal UI for keyboard-driven inspection
+- Electron GUI for desktop workflows
+
+## Safety model
+
+- Every write operation creates a backup manifest first.
+- Rollout files and SQLite state are changed together.
+- Rollback is a first-class command, not a manual recovery recipe.
+- The tool operates on local files only.
+
+## Requirements
+
+- Node.js 20 or newer
+- A local Codex home directory, typically `~/.codex`
 
 ## Install
 
-Run the wrapper once. It installs Node dependencies automatically.
+### Run from a clone
 
 ```bash
-/Users/voriyajasir/code/skills/codex-session-recovery-cli/bin/codex-session-recovery.js --help
+git clone <your-fork-or-repo-url>
+cd codex-session-recovery-cli
+npm install
+node ./src/cli.js --help
 ```
 
-## Common commands
+### Use the wrapper
 
-Use `scan` to inspect what the sidebar would show right now.
+The wrapper bootstraps dependencies on first run:
+
+```bash
+./bin/codex-session-recovery.js --help
+```
+
+### Optional local command install
+
+If you want a local shell command while developing:
+
+```bash
+npm link
+codex-session-recovery --help
+```
+
+## Quick start
+
+Inspect what the sidebar would show right now:
+
+```bash
+codex-session-recovery scan
+```
+
+Preview a provider migration:
+
+```bash
+codex-session-recovery migrate --from openai --to aixj_vip --all
+```
+
+Apply a provider migration:
+
+```bash
+codex-session-recovery migrate --from openai --to aixj_vip --all --apply --yes
+```
+
+Repair stale SQLite state from rollout metadata:
+
+```bash
+codex-session-recovery repair-state --all --apply --yes
+```
+
+Roll back a previous write:
+
+```bash
+codex-session-recovery rollback ~/.codex/migration-backups/<backup-dir> --apply --yes
+```
+
+## Command reference
+
+### `scan`
+
+Analyze sidebar visibility using rollout files and `state_5.sqlite`.
 
 ```bash
 codex-session-recovery scan
@@ -36,93 +119,138 @@ codex-session-recovery scan --provider openai --all
 codex-session-recovery scan --json
 ```
 
-Use `migrate` to preview or apply a provider migration.
+### `migrate`
+
+Preview or apply a provider migration across rollout files and state DB rows.
 
 ```bash
 codex-session-recovery migrate --from openai --to aixj_vip
 codex-session-recovery migrate --from openai --to aixj_vip --apply --yes
 ```
 
-Use `repair-state` when rollout files are correct but `state_5.sqlite` is stale.
+### `repair-state`
+
+Repair stale SQLite state when rollout metadata is the source of truth.
 
 ```bash
 codex-session-recovery repair-state
 codex-session-recovery repair-state --apply --yes
 ```
 
-Use `rollback` with a manifest path or backup directory.
+### `rollback`
+
+Restore a previous backup manifest or backup directory.
 
 ```bash
 codex-session-recovery rollback ~/.codex/migration-backups/provider-openai-to-aixj_vip-YYYYMMDD-HHMMSS
 codex-session-recovery rollback /path/to/manifest.json --apply --yes
 ```
 
-Launch the terminal UI when you want a keyboard-driven workflow.
+### `ui`
+
+Launch the interactive terminal UI.
 
 ```bash
 codex-session-recovery ui
-```
-
-Launch the desktop GUI when you want a visual recovery workflow.
-
-```bash
-npm run gui
 ```
 
 ## Interactive UI
 
 The `ui` subcommand opens a two-pane terminal screen.
 
-- Use `↑` and `↓` to move through sessions.
-- Press `f` to cycle `all`, `visible`, and `hidden` filters.
-- Press `m` on a mismatched session to preview migration to the current default provider.
-- Press `y` on the preview screen to apply the migration.
-- Press `r` to reload after changes.
-- Press `q` to quit.
+- `↑` and `↓` move through sessions
+- `f` cycles `all`, `visible`, and `hidden`
+- `m` previews migration for the selected mismatched session
+- `y` applies the previewed migration
+- `r` reloads the screen
+- `q` quits
 
 ## Desktop GUI
 
 The Electron GUI opens a three-column desktop layout.
 
-- Use the top bar to point at a different `codexHome`, archived mode, provider
-  filters, or source filters.
-- Browse visible and hidden sessions in the left column.
+- Point at a different `codexHome`, archived mode, provider filter, or source
+  filter from the top bar
+- Browse visible and hidden sessions in the left column
 - Inspect reasons, advisories, rollout paths, and provider drift in the middle
-  column.
-- Preview and apply migration or repair actions from the action bar.
-- Review backups and apply rollback from the right column.
+  column
+- Preview and apply migration or repair actions from the action bar
+- Review backups and apply rollback from the right column
 
-The GUI uses the same Node.js recovery core as the CLI. It launches a helper
-bridge with the local Node runtime, so the easiest way to start it is:
+Start the GUI with:
 
 ```bash
-npm install
 npm run gui
 ```
 
 If Node is not on your `PATH`, set `CSR_NODE_BIN` before launching the GUI.
 
-### Desktop packaging
+## Backup layout
 
-You can prepare desktop build output with these commands:
+Every write creates a backup under `~/.codex/migration-backups`.
+
+- `manifest.json` stores the operation, thread IDs, and restore targets
+- `files/...` stores backed-up rollout files
+- `state/state_5.sqlite` stores the SQLite snapshot
+
+## Development
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Run the full local verification suite:
+
+```bash
+npm run check
+```
+
+Available development commands:
+
+```bash
+npm test
+npm run smoke
+npm run gui
+npm run dist:mac
+npm run dist:win
+```
+
+## Testing
+
+The automated test suite covers:
+
+- rollout parsing
+- sidebar filtering rules
+- provider migration
+- state repair
+- backup creation
+- rollback behavior
+- GUI service flows
+
+## Packaging
+
+Desktop build entry points:
 
 ```bash
 npm run dist:mac
 npm run dist:win
 ```
 
-These commands provide Electron build entry points for macOS and Windows. They
-do not handle signing, notarization, or auto-update.
+These commands prepare unsigned build output only. They do not handle signing,
+notarization, or auto-update.
 
-## Backup layout
+## Contributing
 
-Every write creates a backup under `~/.codex/migration-backups`.
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for setup, expectations, and PR
+guidelines.
 
-- `manifest.json` stores the operation, thread ids, and restore targets.
-- `files/...` stores backed-up rollout files.
-- `state/state_5.sqlite` stores the SQLite snapshot.
+## Security
 
-## Next steps
+See [SECURITY.md](./SECURITY.md) for reporting guidance and project-specific
+safety boundaries.
 
-Start with `scan` or `npm run gui`, then decide whether you need `migrate`,
-`repair-state`, or `rollback`.
+## License
+
+[MIT](./LICENSE)
